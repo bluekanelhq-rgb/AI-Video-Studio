@@ -1,0 +1,42 @@
+# Git Commands to Push Backend and Frontend to GitHub
+
+## Step 1: Initialize Git Repository (if not already initialized)
+cd D:\14-March
+git init
+
+## Step 2: Add Remote Repository
+git remote add origin https://github.com/bluekanelhq-rgb/AI-Video-Studio.git
+
+## Step 3: Create .gitignore in Root (if not exists)
+# This will be created automatically in the next step
+
+## Step 4: Stage All Files
+git add .
+
+## Step 5: Commit Changes
+git commit -m "Initial commit: AI Video Studio with backend and frontend"
+
+## Step 6: Push to GitHub
+git branch -M main
+git push -u origin main
+
+## Alternative: If repository already exists and you want to force push
+# git push -f origin main
+
+## To check status at any time
+git status
+
+## To see what will be committed
+git diff --cached
+
+## Notes:
+# - Make sure .env files are in .gitignore (they should be)
+# - Make sure node_modules are in .gitignore (they should be)
+# - The .next folder (frontend build) should be in .gitignore
+# - The dist folder (backend build) can be committed or ignored (Railway will rebuild)
+
+## Verify Remote
+git remote -v
+
+## If you need to change remote URL
+# git remote set-url origin https://github.com/bluekanelhq-rgb/AI-Video-Studio.git
