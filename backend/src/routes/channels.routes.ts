@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { query } from '../database/db';
 import { youtubeService } from '../services/youtube.service';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth.middleware';
+import { liveStreamQueue } from '../queues';
 
 export async function channelsRoutes(fastify: FastifyInstance) {
   // Add channel
@@ -92,6 +93,25 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
       console.log('Channel saved to database:', result.rows[0].id);
 
+      // Start livestream monitoring for this channel
+      const channel = result.rows[0];
+      await liveStreamQueue.add(
+        `monitor-channel-${channel.id}`,
+        {
+          channelId: channel.id,
+          youtubeChannelId: channelInfo.id,
+          userId: userId,
+        },
+        {
+          repeat: {
+            pattern: '*/5 * * * *', // Check every 5 minutes
+          },
+          jobId: `monitor-channel-${channel.id}`, // Unique job ID to prevent duplicates
+        }
+      );
+
+      console.log('Livestream monitoring started for channel:', channel.id);
+
       return reply.send({ success: true, channel: result.rows[0] });
     } catch (error: any) {
       console.error('Error adding channel:', error);
@@ -126,15 +146,41 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
     try {
       // Verify ownership
-      const ownerCheck = await query('SELECT user_id FROM channels WHERE id = $1', [id]);
+      const ownerCheck = await query('SELECT user_id, channel_id FROM channels WHERE id = $1', [id]);
       if (ownerCheck.rows.length === 0 || ownerCheck.rows[0].user_id !== userId) {
         return reply.code(403).send({ error: 'Access denied' });
       }
+
+      const channel = ownerCheck.rows[0];
 
       const result = await query(
         'UPDATE channels SET monitoring = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3 RETURNING *',
         [monitoring, id, userId]
       );
+
+      // Start or stop livestream monitoring
+      if (monitoring) {
+        // Start monitoring
+        await liveStreamQueue.add(
+          `monitor-channel-${id}`,
+          {
+            channelId: parseInt(id),
+            youtubeChannelId: channel.channel_id,
+            userId: userId,
+          },
+          {
+            repeat: {
+              pattern: '*/5 * * * *', // Check every 5 minutes
+            },
+            jobId: `monitor-channel-${id}`, // Unique job ID to prevent duplicates
+          }
+        );
+        console.log('Livestream monitoring started for channel:', id);
+      } else {
+        // Stop monitoring - remove repeatable job
+        await liveStreamQueue.removeRepeatableByKey(`monitor-channel-${id}:::*/5 * * * *`);
+        console.log('Livestream monitoring stopped for channel:', id);
+      }
 
       return reply.send({ success: true, channel: result.rows[0] });
     } catch (error) {
@@ -154,6 +200,14 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
       if (result.rows.length === 0) {
         return reply.code(404).send({ error: 'Channel not found or access denied' });
+      }
+
+      // Stop livestream monitoring for this channel
+      try {
+        await liveStreamQueue.removeRepeatableByKey(`monitor-channel-${id}:::*/5 * * * *`);
+        console.log('Livestream monitoring stopped for deleted channel:', id);
+      } catch (error) {
+        console.log('No monitoring job to remove for channel:', id);
       }
 
       return reply.send({ success: true, message: 'Channel removed successfully' });

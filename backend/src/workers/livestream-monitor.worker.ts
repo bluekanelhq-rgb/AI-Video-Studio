@@ -2,7 +2,7 @@ import { Worker, Job } from 'bullmq';
 import { config } from '../config';
 import { youtubeService } from '../services/youtube.service';
 import { query } from '../database/db';
-import { clipGenerationQueue } from '../queues';
+import { videoDownloadQueue } from '../queues';
 
 const connection = {
   host: config.redis.host,
@@ -28,50 +28,73 @@ export const liveStreamMonitorWorker = new Worker<LiveStreamMonitorJob>(
       const liveStreams = await youtubeService.checkLiveStreams(youtubeChannelId);
 
       if (liveStreams.length > 0) {
+        console.log(`Found ${liveStreams.length} live stream(s) for channel ${youtubeChannelId}`);
+        
         for (const stream of liveStreams) {
           const videoId = stream.id.videoId;
 
           // Check if already processing
           const existing = await query(
-            'SELECT id FROM videos WHERE video_id = $1 AND is_live = true',
+            'SELECT id, status FROM videos WHERE video_id = $1',
             [videoId]
           );
 
           if (existing.rows.length === 0) {
-            // Add new live stream
+            // Add new live stream to database
             const result = await query(
-              `INSERT INTO videos (user_id, channel_id, video_id, title, url, is_live, status)
-               VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+              `INSERT INTO videos (user_id, channel_id, video_id, title, url, status)
+               VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
               [
                 userId,
                 channelId,
                 videoId,
                 stream.snippet.title,
                 `https://youtube.com/watch?v=${videoId}`,
-                true,
-                'live',
+                'pending',
               ]
             );
 
             console.log(`New live stream detected: ${stream.snippet.title}`);
+            console.log(`Starting download and clip generation for video ID: ${result.rows[0].id}`);
 
-            // Start clip generation for live stream
-            await clipGenerationQueue.add(
-              'generate-live-clips',
+            // Add to video download queue (which will then trigger clip generation)
+            await videoDownloadQueue.add(
+              'download-live-stream',
               {
                 videoId: result.rows[0].id,
                 videoUrl: `https://youtube.com/watch?v=${videoId}`,
                 userId,
-                isLive: true,
               },
               {
-                repeat: {
-                  every: 120000, // Generate clips every 2 minutes
-                },
+                priority: 1, // High priority for live streams
               }
             );
+          } else if (existing.rows[0].status === 'failed') {
+            // Retry failed live streams
+            console.log(`Retrying failed live stream: ${videoId}`);
+            
+            await query(
+              'UPDATE videos SET status = $1, updated_at = NOW() WHERE video_id = $2',
+              ['pending', videoId]
+            );
+
+            await videoDownloadQueue.add(
+              'retry-live-stream',
+              {
+                videoId: existing.rows[0].id,
+                videoUrl: `https://youtube.com/watch?v=${videoId}`,
+                userId,
+              },
+              {
+                priority: 1,
+              }
+            );
+          } else {
+            console.log(`Live stream already being processed: ${videoId} (status: ${existing.rows[0].status})`);
           }
         }
+      } else {
+        console.log(`No live streams found for channel ${youtubeChannelId}`);
       }
 
       // Update last checked

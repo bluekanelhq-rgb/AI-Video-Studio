@@ -12,6 +12,8 @@ import { clipsRoutes } from './routes/clips.routes';
 import { socialRoutes } from './routes/social.routes';
 import { myVideosRoutes } from './routes/my-videos.routes';
 import { dashboardRoutes } from './routes/dashboard.routes';
+import { query } from './database/db';
+import { liveStreamQueue } from './queues';
 
 const fastify = Fastify({
   logger: true,
@@ -66,10 +68,52 @@ const start = async () => {
   try {
     await fastify.listen({ port: config.port, host: '0.0.0.0' });
     console.log(`Server running on port ${config.port}`);
+    
+    // Initialize livestream monitoring for existing channels
+    await initializeLivestreamMonitoring();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
   }
 };
+
+// Initialize livestream monitoring for channels that have monitoring enabled
+async function initializeLivestreamMonitoring() {
+  try {
+    console.log('Initializing livestream monitoring for existing channels...');
+    
+    const result = await query(
+      'SELECT id, channel_id, user_id FROM channels WHERE monitoring = true'
+    );
+    
+    if (result.rows.length > 0) {
+      console.log(`Found ${result.rows.length} channel(s) with monitoring enabled`);
+      
+      for (const channel of result.rows) {
+        await liveStreamQueue.add(
+          `monitor-channel-${channel.id}`,
+          {
+            channelId: channel.id,
+            youtubeChannelId: channel.channel_id,
+            userId: channel.user_id,
+          },
+          {
+            repeat: {
+              pattern: '*/5 * * * *', // Check every 5 minutes
+            },
+            jobId: `monitor-channel-${channel.id}`,
+          }
+        );
+        console.log(`Monitoring started for channel ID: ${channel.id}`);
+      }
+      
+      console.log('Livestream monitoring initialization complete');
+    } else {
+      console.log('No channels with monitoring enabled');
+    }
+  } catch (error) {
+    console.error('Error initializing livestream monitoring:', error);
+  }
+}
 
 start();
