@@ -4,6 +4,12 @@ import fs from 'fs';
 
 dotenv.config();
 
+// Debug: Log Redis configuration
+console.log('Redis Configuration:');
+console.log('- REDIS_URL:', process.env.REDIS_URL ? 'SET (hidden)' : 'NOT SET');
+console.log('- REDIS_HOST:', process.env.REDIS_HOST || 'localhost (default)');
+console.log('- REDIS_PORT:', process.env.REDIS_PORT || '6379 (default)');
+
 // Ensure storage directories exist
 const uploadDir = path.join(process.cwd(), 'uploads');
 const clipsDir = path.join(process.cwd(), 'clips');
@@ -23,6 +29,8 @@ export const config = {
   },
   
   redis: {
+    // Support both individual config and Railway's REDIS_URL
+    url: process.env.REDIS_URL || undefined,
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD || undefined,

@@ -76,7 +76,7 @@ Create `backend/railway.json`:
 1. Click "+ New" again
 2. Select "Database" → "Redis"
 3. Railway will automatically create a Redis instance
-4. Note: Railway will automatically set `REDIS_URL` environment variable
+4. Note: Railway will automatically set `REDIS_URL` environment variable (e.g., `redis://default:password@host:port`)
 
 ## Step 3: Configure Environment Variables
 
@@ -93,10 +93,13 @@ PORT=3001
 # DATABASE_URL=postgresql://user:password@host:port/database
 
 # Redis (automatically set by Railway Redis)
-# REDIS_URL=redis://host:port
+# REDIS_URL=redis://default:password@host:port
 
 # JWT Secret (generate a secure random string)
 JWT_SECRET=your-super-secure-jwt-secret-key-here-min-32-chars
+
+# YouTube API (Required for livestream monitoring)
+YOUTUBE_API_KEY=your-youtube-api-key-here
 
 # OpenAI (optional - for AI features)
 OPENAI_API_KEY=your-openai-api-key-here
@@ -104,6 +107,12 @@ OPENAI_API_KEY=your-openai-api-key-here
 # CORS (your frontend URL)
 CORS_ORIGIN=https://your-frontend-domain.vercel.app
 ```
+
+**Important Notes:**
+- `DATABASE_URL` is automatically set by Railway when you add PostgreSQL
+- `REDIS_URL` is automatically set by Railway when you add Redis
+- Both use the format that includes credentials in the URL
+- The backend automatically detects and uses these URL formats
 
 ### Generate JWT Secret
 
@@ -272,10 +281,13 @@ curl -X POST https://your-backend-service.railway.app/api/auth/login \
 | NODE_ENV | Yes | Environment | `production` |
 | PORT | Yes | Server port | `3001` |
 | DATABASE_URL | Yes | PostgreSQL connection | Auto-set by Railway |
-| REDIS_URL | Yes | Redis connection | Auto-set by Railway |
+| REDIS_URL | Yes | Redis connection URL | Auto-set by Railway |
 | JWT_SECRET | Yes | JWT signing key | 64-char random string |
+| YOUTUBE_API_KEY | Yes | YouTube Data API key | `AIzaSy...` |
 | OPENAI_API_KEY | No | OpenAI API key | `sk-...` |
 | CORS_ORIGIN | Yes | Frontend URL | `https://app.vercel.app` |
+
+**Note**: Railway automatically sets `DATABASE_URL` and `REDIS_URL` when you add those services. The format includes all connection details (host, port, password) in a single URL string.
 
 ## Useful Railway CLI Commands
 

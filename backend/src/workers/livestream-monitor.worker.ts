@@ -4,11 +4,25 @@ import { youtubeService } from '../services/youtube.service';
 import { query } from '../database/db';
 import { videoDownloadQueue } from '../queues';
 
-const connection = {
-  host: config.redis.host,
-  port: config.redis.port,
-  password: config.redis.password,
+// Parse Railway Redis URL or use individual config
+const getConnection = () => {
+  if (config.redis.url) {
+    const url = new URL(config.redis.url);
+    return {
+      host: url.hostname,
+      port: parseInt(url.port),
+      password: url.password,
+      username: url.username !== 'default' ? url.username : undefined,
+    };
+  }
+  return {
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+  };
 };
+
+const connection = getConnection();
 
 interface LiveStreamMonitorJob {
   channelId: number;

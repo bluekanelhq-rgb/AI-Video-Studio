@@ -1,0 +1,19 @@
+Quick Test Commands:
+
+1. Stop the current dev server (Ctrl+C)
+
+2. Restart it:
+   cd backend
+   npm run dev
+
+3. Check the output for:
+   - "Redis Configuration:"
+   - "- REDIS_URL: SET (hidden)" or "NOT SET"
+   - "Queue Connection: Using REDIS_URL" or "Using individual config"
+
+If it says "NOT SET", the .env file is not being loaded properly.
+
+Possible solutions:
+- Make sure you're in the backend directory when running npm run dev
+- Try: npm run dev -- --env-file=.env
+- Or manually set: $env:REDIS_URL="redis://default:NwJnyiNAIHUwREgSMvczwVMYPkttqjFB@caboose.proxy.rlwy.net:55910"; npm run dev

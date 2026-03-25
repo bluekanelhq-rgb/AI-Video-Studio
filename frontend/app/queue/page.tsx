@@ -7,8 +7,22 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Video, Edit, Calendar, Clock, Instagram, Youtube, Loader2, Trash2, Play, Hash, Facebook } from "lucide-react"
+import { Video, Edit, Calendar, Clock, Instagram, Youtube, Loader2, Trash2, Play, Hash, Facebook, Twitter, Linkedin } from "lucide-react"
 import { api } from "@/lib/api"
+
+// Custom TikTok icon
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+)
+
+// Custom Threads icon
+const ThreadsIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.781 3.631 2.695 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142l-.126 1.974a11.881 11.881 0 0 0-2.588-.12c-1.014.058-1.84.355-2.456.882-.578.495-.897 1.187-.897 1.941.058.86.403 1.472.97 1.821.635.39 1.505.577 2.447.523 1.036-.059 1.834-.455 2.37-1.179.48-.648.769-1.568.854-2.74-1.984-.983-4.588-1.316-6.98-.897-2.275.398-4.034 1.317-5.23 2.73-1.262 1.493-1.888 3.433-1.862 5.77.026 2.337.652 4.277 1.862 5.77 1.196 1.413 2.955 2.332 5.23 2.73 2.392.419 5.006.086 6.98-.897-.085-1.172-.374-2.092-.854-2.74-.536-.724-1.334-1.12-2.37-1.179-.942-.054-1.812.133-2.447.523-.567.349-.912.961-.97 1.821 0 .754.319 1.446.897 1.941.616.527 1.442.824 2.456.882a11.881 11.881 0 0 0 2.588-.12l.126 1.974a13.853 13.853 0 0 1-3.02.142c-1.464-.084-2.703-.531-3.583-1.291-.922-.797-1.395-1.892-1.33-3.082.067-1.224.689-2.275 1.752-2.964.898-.583 2.057-.866 3.259-.801 1.59.086 2.844.688 3.73 1.79.662.826 1.092 1.92 1.284 3.272.761-.45 1.324-1.04 1.634-1.75.528-1.205.557-3.185-1.09-4.798-1.442-1.414-3.177-2.025-5.8-2.045z"/>
+  </svg>
+)
 
 interface QueueItem {
   id: number
@@ -27,11 +41,21 @@ interface QueueItem {
 const platformIcons: Record<string, any> = {
   instagram: Instagram,
   facebook: Facebook,
+  youtube: Youtube,
+  tiktok: TikTokIcon,
+  threads: ThreadsIcon,
+  twitter: Twitter,
+  linkedin: Linkedin,
 }
 
 const platformColors: Record<string, string> = {
   instagram: "from-purple-500 to-pink-500",
   facebook: "from-blue-500 to-blue-600",
+  youtube: "from-red-500 to-red-600",
+  tiktok: "from-black to-gray-800",
+  threads: "from-gray-900 to-gray-700",
+  twitter: "from-blue-400 to-blue-500",
+  linkedin: "from-blue-600 to-blue-700",
 }
 
 export default function QueuePage() {

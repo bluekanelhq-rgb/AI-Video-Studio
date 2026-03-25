@@ -31,6 +31,11 @@ export default function RepurposePage() {
   const platforms = [
     { id: "instagram", name: "Instagram" },
     { id: "facebook", name: "Facebook" },
+    { id: "youtube", name: "YouTube" },
+    { id: "tiktok", name: "TikTok" },
+    { id: "threads", name: "Threads" },
+    { id: "twitter", name: "Twitter (X)" },
+    { id: "linkedin", name: "LinkedIn" },
   ]
 
   const videoStyles = [

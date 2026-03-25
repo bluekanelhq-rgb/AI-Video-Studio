@@ -5,11 +5,25 @@ import { query } from '../database/db';
 import path from 'path';
 import fs from 'fs';
 
-const connection = {
-  host: config.redis.host,
-  port: config.redis.port,
-  password: config.redis.password,
+// Parse Railway Redis URL or use individual config
+const getConnection = () => {
+  if (config.redis.url) {
+    const url = new URL(config.redis.url);
+    return {
+      host: url.hostname,
+      port: parseInt(url.port),
+      password: url.password,
+      username: url.username !== 'default' ? url.username : undefined,
+    };
+  }
+  return {
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+  };
 };
+
+const connection = getConnection();
 
 interface VideoDownloadJob {
   videoId: number;

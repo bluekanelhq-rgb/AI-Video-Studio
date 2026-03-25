@@ -1,11 +1,36 @@
 import { Queue, QueueOptions } from 'bullmq';
 import { config } from '../config';
 
-const connection = {
-  host: config.redis.host,
-  port: config.redis.port,
-  password: config.redis.password,
+// Create connection config for BullMQ
+// BullMQ expects connection as an object, not a string URL
+const getConnection = () => {
+  if (config.redis.url) {
+    // Parse Railway Redis URL
+    const url = new URL(config.redis.url);
+    return {
+      host: url.hostname,
+      port: parseInt(url.port),
+      password: url.password,
+      username: url.username !== 'default' ? url.username : undefined,
+    };
+  }
+  
+  // Fallback to individual config
+  return {
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+  };
 };
+
+const connection = getConnection();
+
+// Debug: Log connection details
+console.log('Redis Connection Config:', {
+  host: connection.host,
+  port: connection.port,
+  hasPassword: !!connection.password,
+});
 
 const defaultJobOptions: QueueOptions['defaultJobOptions'] = {
   attempts: 3,
