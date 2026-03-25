@@ -21,7 +21,9 @@ const fastify = Fastify({
 
 // Register plugins
 fastify.register(cors, {
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',').map(url => url.trim())
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true, // Allow cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 });
